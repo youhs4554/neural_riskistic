@@ -1,0 +1,1 @@
+python -m grpc_tools.protoc --proto_path=grpc_test/protos/ --python_out=grpc_test --grpc_python_out=grpc_test grpc_test/protos/inference.proto grpc_test/protos/management.proto
