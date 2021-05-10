@@ -1,36 +1,30 @@
 import sys
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialog, QApplication, QLineEdit, QWidget
+from PyQt5.QtGui import QIcon
+from video_widget import VideoWidget
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QAction, QDialog, QApplication, QLabel, QLineEdit, QMainWindow, QStackedWidget
 from PyQt5.uic import loadUi
 import pyrebase
+from dotenv import dotenv_values
 
-firebaseConfig = {
-    "apiKey": "AIzaSyDdwuA19Lmdm6vHWNDel7cJM28Ff39os88",
-    "authDomain": "auth-risk-f89e3.firebaseapp.com",
-    "databaseURL": "",
-    "projectId": "auth-risk-f89e3",
-    "storageBucket": "auth-risk-f89e3.appspot.com",
-    "messagingSenderId": "831873646665",
-    "appId": "1:831873646665:web:c95e0f894a93f799747f98",
-    "measurementId": "G-D7YEY21SDQ"
-}
-
+firebaseConfig = dotenv_values(".env")
 firebase = pyrebase.initialize_app(firebaseConfig)
 
 auth = firebase.auth()
 
 
 class MainWidget(QtWidgets.QStackedWidget):
-    def __init__(self):
+    def __init__(self, dialog, size=(480, 640), enabled=True):
         super().__init__()
-        self.init_ui()
+        self.init_ui(dialog, size, enabled)
 
-    def init_ui(self):
-        mainwindow = Login()
-        self.setFixedSize(480, 640)
-        self.addWidget(mainwindow)
+    def init_ui(self, dialog, size, enabled):
+        dialog_instance = dialog()
+        self.setFixedSize(*size)
+        self.addWidget(dialog_instance)
         self.center()
-        self.show()
+        if enabled:
+            self.show()
 
     def center(self):
         # geometry of the main window
@@ -69,14 +63,13 @@ class Login(QDialog):
     def gotocreate(self):
         createacc = CreateAcc()
         widget.addWidget(createacc)
-        widget.setCurrentIndex(widget.currentIndex()+1)
+        widget.setCurrentIndex(widget.currentIndex() + 1)
 
     def openDashboard(self):
         # hide parent widget
         self.parent().hide()
-        # open dash board dialog
-        dashboard = DashBoard()
-        dashboard.exec_()
+        # open main app
+        win.show()
 
 
 class CreateAcc(QDialog):
@@ -105,7 +98,7 @@ class CreateAcc(QDialog):
                 # if successfully create account -> go to login window
                 login = Login()
                 widget.addWidget(login)
-                widget.setCurrentIndex(widget.currentIndex()+1)
+                widget.setCurrentIndex(widget.currentIndex() + 1)
             except:
                 # else invalid message shows up
                 self.invalid.setVisible(True)
@@ -118,63 +111,101 @@ class CreateAcc(QDialog):
     def gotologin(self):
         login = Login()
         widget.addWidget(login)
-        widget.setCurrentIndex(widget.currentIndex()+1)
+        widget.setCurrentIndex(widget.currentIndex() + 1)
 
 
-class ComponentsHandler():
-    # component group1(video player)
-    __components = {
-        "1": ["start_btn", "stop_btn", "pause_btn", "video_plane"],
-        "2": ["riskhistory", "gaithistory"]
-    }
-
-    @staticmethod
-    def init_components(ui):
-        n_mode = len(ComponentsHandler.__components.keys())
-        for mode in range(1, n_mode+1):
-            for compo in ComponentsHandler.get_components(mode):
-                getattr(ui, compo).setVisible(False)
-
-    @staticmethod
-    def get_components(mode):
-        return ComponentsHandler().__components[str(mode)]
-
-    @staticmethod
-    def show_components(ui, mode):
-        # re-init componets
-        ComponentsHandler.init_components(ui)
-
-        for compo in ComponentsHandler.get_components(mode):
-            getattr(ui, compo).setVisible(True)
-
-
-class DashBoard(QDialog):
-    def __init__(self):
+class MainApp(QMainWindow):
+    def __init__(self, enabled=True):
         super().__init__()
-        loadUi("ui_files/dashboard.ui", self)
-        self.setWindowTitle("Neural Riskistic Dashboard")
-        self.setFixedSize(1920, 1080)
+        self.initUI(enabled)
 
-        # init components
-        ComponentsHandler.init_components(self)
+    def initUI(self, enabled):
+        self.homeAction = QAction(QIcon('./images/home_icon.png'),
+                                  'Go to dashboard home', self)
+        self.homeAction.triggered.connect(self.show_Home)
+        self.homeAction.setCheckable(True)
 
-        self.clickme1.clicked.connect(self.show_comp1)
-        self.clickme2.clicked.connect(self.show_comp2)
+        self.startAction = QAction(
+            QIcon('./images/activity_icon.png'), 'Run Activity Test', self)
+        self.startAction.triggered.connect(self.start_ActivityTest)
+        self.startAction.setCheckable(True)
+
+        self.dummyAction = QAction(QIcon('./images/dashboard_icon.png'),
+                                   'Open Dashboard', self)
+        self.dummyAction.triggered.connect(self.show_DashBoard)
+        self.dummyAction.setCheckable(True)
+
+        self.statusBar()
+
+        self.toolbar = self.addToolBar('Exit')
+        self.addToolBar(QtCore.Qt.LeftToolBarArea, self.toolbar)
+        self.toolbar.addAction(self.homeAction)
+        self.toolbar.addAction(self.startAction)
+        self.toolbar.addAction(self.dummyAction)
+        self.toolbar.setIconSize(QtCore.QSize(64, 64))
+
+        self.setFixedSize(640 + 300, 480 + 300)
+
+        self.setWindowTitle('Neural Riskistic App')
+        self.setGeometry(300, 300, 300, 200)
+
+        self.central_widget = QStackedWidget()
+        self.setCentralWidget(self.central_widget)
+        self.dashExample = QLabel(self)
+        self.dashExample.resize(640 + 250, 480 + 250)
 
         # dummy dashboard example image
         self.dashExample.setStyleSheet(
             "image:url(./images/dashboard_example.png)")
 
-    def show_comp1(self):
-        print("clicked-btn1!!!")
-        ComponentsHandler.show_components(self, mode=1)
+        # initial fallback
+        self.show_Home()
 
-    def show_comp2(self):
-        print("clicked-btn2!!!")
-        ComponentsHandler.show_components(self, mode=2)
+        if enabled:
+            self.show()
+
+    def uncheck_toolbar(self):
+        self.homeAction.setChecked(False)
+        self.startAction.setChecked(False)
+        self.dummyAction.setChecked(False)
+
+    def show_Home(self):
+        print("show_Home!!!")
+
+        self.uncheck_toolbar()
+        self.homeAction.setChecked(True)
+
+        if getattr(self, "video_widget", None) is not None:
+            self.video_widget.video_worker.flag = 1
+            del self.video_widget
+        self.central_widget.addWidget(self.dashExample)
+        self.central_widget.setCurrentWidget(self.dashExample)
+
+    def start_ActivityTest(self):
+        print("start_ActivityTest!!!")
+
+        self.uncheck_toolbar()
+        self.startAction.setChecked(True)
+
+        self.video_widget = VideoWidget(self)
+        self.central_widget.addWidget(self.video_widget)
+        self.central_widget.setCurrentWidget(self.video_widget)
+
+    def show_DashBoard(self):
+        print("show_DashBoard!!!")
+
+        self.uncheck_toolbar()
+        self.dummyAction.setChecked(True)
+
+        if getattr(self, "video_widget", None) is not None:
+            self.video_widget.video_worker.flag = 1
+            del self.video_widget
+        self.central_widget.addWidget(self.dashExample)
+        self.central_widget.setCurrentWidget(self.dashExample)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    widget = MainWidget()
-    app.exec_()
+    widget = MainWidget(Login, size=(480, 640))
+    win = MainApp(enabled=False)
+    sys.exit(app.exec_())
