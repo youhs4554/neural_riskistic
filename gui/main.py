@@ -6,11 +6,18 @@ from PyQt5.QtWidgets import QAction, QDialog, QApplication, QLabel, QLineEdit, Q
 from PyQt5.uic import loadUi
 import pyrebase
 from dotenv import dotenv_values
+import time
 
-firebaseConfig = dotenv_values(".env")
-firebase = pyrebase.initialize_app(firebaseConfig)
 
-auth = firebase.auth()
+def releaseCameraResource(func):
+    def wrapper_fn(self):
+        func(self)
+        if getattr(self, "video_widget", None) is not None:
+            self.video_widget.video_worker.flag = 1
+            time.sleep(1)
+            del self.video_widget
+
+    return wrapper_fn
 
 
 class MainWidget(QtWidgets.QStackedWidget):
@@ -130,19 +137,26 @@ class MainApp(QMainWindow):
         self.startAction.triggered.connect(self.start_ActivityTest)
         self.startAction.setCheckable(True)
 
-        self.dummyAction = QAction(QIcon('./images/dashboard_icon.png'),
-                                   'Open Dashboard', self)
-        self.dummyAction.triggered.connect(self.show_DashBoard)
-        self.dummyAction.setCheckable(True)
+        self.gaitAction = QAction(QIcon('./images/gait_icon.png'),
+                                  'Run Gait Test', self)
+        self.gaitAction.triggered.connect(self.start_GaitTest)
+        self.gaitAction.setCheckable(True)
 
+        self.exitAction = QAction(QIcon("./images/exit_icon.png"),
+                                  'Exit client and return to login window!', self)
+        self.exitAction.triggered.connect(self.exit_App)
         self.statusBar()
 
-        self.toolbar = self.addToolBar('Exit')
+        self.toolbar = self.addToolBar("side-banner")
         self.addToolBar(QtCore.Qt.LeftToolBarArea, self.toolbar)
         self.toolbar.addAction(self.homeAction)
         self.toolbar.addAction(self.startAction)
-        self.toolbar.addAction(self.dummyAction)
+        self.toolbar.addAction(self.gaitAction)
+        self.toolbar.addAction(self.exitAction)
         self.toolbar.setIconSize(QtCore.QSize(64, 64))
+
+        self.toolbar.setStyleSheet(
+            "QToolButton:hover {background-color:lightgray} QToolButton:checked { border : 10px solid yellow }")
 
         self.setFixedSize(640 + 300, 480 + 300)
 
@@ -167,22 +181,25 @@ class MainApp(QMainWindow):
     def uncheck_toolbar(self):
         self.homeAction.setChecked(False)
         self.startAction.setChecked(False)
-        self.dummyAction.setChecked(False)
+        self.gaitAction.setChecked(False)
 
+    @releaseCameraResource
     def show_Home(self):
         print("show_Home!!!")
 
         self.uncheck_toolbar()
         self.homeAction.setChecked(True)
 
-        if getattr(self, "video_widget", None) is not None:
-            self.video_widget.video_worker.flag = 1
-            del self.video_widget
         self.central_widget.addWidget(self.dashExample)
         self.central_widget.setCurrentWidget(self.dashExample)
 
     def start_ActivityTest(self):
         print("start_ActivityTest!!!")
+
+        if getattr(self, "video_widget", None) is not None:
+            self.video_widget.video_worker.flag = 1
+            time.sleep(1)
+            del self.video_widget
 
         self.uncheck_toolbar()
         self.startAction.setChecked(True)
@@ -191,20 +208,42 @@ class MainApp(QMainWindow):
         self.central_widget.addWidget(self.video_widget)
         self.central_widget.setCurrentWidget(self.video_widget)
 
-    def show_DashBoard(self):
-        print("show_DashBoard!!!")
-
-        self.uncheck_toolbar()
-        self.dummyAction.setChecked(True)
-
+    def start_GaitTest(self):
+        print("start_GaitTest!!!")
         if getattr(self, "video_widget", None) is not None:
             self.video_widget.video_worker.flag = 1
+            time.sleep(1)
             del self.video_widget
+
+        self.uncheck_toolbar()
+        self.gaitAction.setChecked(True)
+
+        # TODO. embed video widget for gait analysis
+        self.video_widget = VideoWidget(self)
+        self.central_widget.addWidget(self.video_widget)
+        self.central_widget.setCurrentWidget(self.video_widget)
+
+    @releaseCameraResource
+    def exit_App(self):
         self.central_widget.addWidget(self.dashExample)
         self.central_widget.setCurrentWidget(self.dashExample)
+        self.uncheck_toolbar()
+        self.homeAction.setChecked(True)
+        self.close()
+
+        # return to login widget
+        login = Login()
+        widget.addWidget(login)
+        widget.setCurrentIndex(widget.currentIndex() + 1)
+        widget.show()
 
 
 if __name__ == "__main__":
+    # firebase setup
+    firebaseConfig = dotenv_values(".env")
+    firebase = pyrebase.initialize_app(firebaseConfig)
+    auth = firebase.auth()
+
     app = QApplication(sys.argv)
     widget = MainWidget(Login, size=(480, 640))
     win = MainApp(enabled=False)

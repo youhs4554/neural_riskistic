@@ -98,6 +98,7 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
         self.ax1.grid(True)
         self.ax1.set(frame_on=False)
 
+        # TODO. multiple line graphs
         self.line1 = Line2D([], [], color='cyan')
         self.line1_tail = Line2D([], [], color='red', linewidth=2)
         self.line1_head = Line2D(
@@ -147,6 +148,7 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
             self.y[-1] = self.addedData[0]
             del(self.addedData[0])
 
+        # TODO. draw frame on multiple lines
         self.line1.set_data(
             self.n[0:self.n.size - margin], self.y[0:self.n.size - margin])
         self.line1_tail.set_data(np.append(

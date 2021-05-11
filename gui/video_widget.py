@@ -150,9 +150,9 @@ class VideoWidget(QtWidgets.QWidget):
         self.vertical_layout.setAlignment(QtCore.Qt.AlignHCenter)
 
         # Add the callbackfunc to ..
-        myDataLoop = threading.Thread(
-            name='myDataLoop', target=self.video_worker.dataSendLoop, daemon=True, args=(self.addData_callbackFunc,))
-        myDataLoop.start()
+        self.graph_worker = threading.Thread(
+            name='graph_worker', target=self.video_worker.dataSendLoop, daemon=True, args=(self.addData_callbackFunc,))
+        self.graph_worker.start()
 
         # initial click after widgets are mounted
         self.start_btn.click()
