@@ -169,6 +169,20 @@ class ActivityClassifier(BaseHandler):
         print("####################### shape of inference data : ", type(inference_output), inference_output.shape)
 
         # Take output from network and post-process to desired format
-        postprocess_output = inference_output
-        
-        return postprocess_output.tolist()
+        __classes = dict(enumerate(['background', 
+                 'falling', 
+                 'sitting', 
+                 'sleeping', 
+                 'standing',
+                 'walking']))
+        probs, predictions = inference_output.sort(1, True)
+        probs = probs.tolist()
+        predictions = predictions.tolist()
+
+        # resulting response
+        res = [ 
+            {
+                __classes[pred]: prob for pred,prob in zip(pred_sample, prob_sample)
+            } for pred_sample, prob_sample in zip(predictions, probs)
+        ]
+        return res
