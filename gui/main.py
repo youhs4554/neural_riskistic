@@ -14,7 +14,7 @@ def releaseCameraResource(func):
         func(self)
         if getattr(self, "video_widget", None) is not None:
             self.video_widget.video_worker.flag = 1
-            time.sleep(1)
+            time.sleep(0.5)
             del self.video_widget
 
     return wrapper_fn
@@ -62,6 +62,7 @@ class Login(QDialog):
         try:
             user = auth.sign_in_with_email_and_password(email, password)
             print("Login Success!")
+            self.authenticated = True
             # open dashboard window
             self.openDashboard()
         except:
@@ -77,6 +78,16 @@ class Login(QDialog):
         self.parent().hide()
         # open main app
         win.show()
+
+    def closeEvent(self, event):
+        if not self.authenticated:
+            event.ignore()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Return:
+            self.loginfunction()
+        elif not event.key() == QtCore.Qt.Key_Escape:
+            super(Login, self).keyPressEvent(event)
 
 
 class CreateAcc(QDialog):
@@ -124,6 +135,7 @@ class CreateAcc(QDialog):
 class MainApp(QMainWindow):
     def __init__(self, enabled=True):
         super().__init__()
+        self.date = QtCore.QDateTime.currentDateTime()
         self.initUI(enabled)
 
     def initUI(self, enabled):
@@ -145,7 +157,7 @@ class MainApp(QMainWindow):
         self.exitAction = QAction(QIcon("./images/exit_icon.png"),
                                   'Exit client and return to login window!', self)
         self.exitAction.triggered.connect(self.exit_App)
-        self.statusBar()
+        self.statusBar().showMessage(self.date.toString(QtCore.Qt.DefaultLocaleLongDate))
 
         self.toolbar = self.addToolBar("side-banner")
         self.addToolBar(QtCore.Qt.LeftToolBarArea, self.toolbar)
@@ -158,10 +170,7 @@ class MainApp(QMainWindow):
         self.toolbar.setStyleSheet(
             "QToolButton:hover {background-color:lightgray} QToolButton:checked { border : 10px solid yellow }")
 
-        self.setFixedSize(640 + 300, 480 + 300)
-
         self.setWindowTitle('Neural Riskistic App')
-        self.setGeometry(300, 300, 300, 200)
 
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
@@ -171,6 +180,14 @@ class MainApp(QMainWindow):
         # dummy dashboard example image
         self.dashExample.setStyleSheet(
             "image:url(./images/dashboard_example.png)")
+
+        screen = QtWidgets.QDesktopWidget().screenGeometry()
+        size = self.geometry()
+
+        # resize and centerize
+        self.resize(screen.width(), screen.height())
+        self.move((screen.width() - size.width()) // 2,
+                  (screen.height() - size.height()) // 2)
 
         # initial fallback
         self.show_Home()

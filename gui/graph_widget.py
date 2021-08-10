@@ -10,6 +10,8 @@
 
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
+from matplotlib import pyplot as plt
+import matplotlib as mpl
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.animation import TimedAnimation
@@ -18,96 +20,60 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import time
 import threading
 import matplotlib
+from datetime import datetime
+import pandas as pd
+
 matplotlib.use("Qt5Agg")
 
 
-def setCustomSize(x, width, height):
-    sizePolicy = QtWidgets.QSizePolicy(
-        QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-    sizePolicy.setHorizontalStretch(0)
-    sizePolicy.setVerticalStretch(0)
-    sizePolicy.setHeightForWidth(x.sizePolicy().hasHeightForWidth())
-    x.setSizePolicy(sizePolicy)
-    x.setMaximumSize(QtCore.QSize(width, height))
-
-
-class CustomMainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(CustomMainWindow, self).__init__()
-
-        # Define the geometry of the main window
-        self.setGeometry(300, 300, 800, 400)
-        self.setWindowTitle("my first window")
-
-        # Create FRAME_A
-        self.FRAME_A = QtWidgets.QFrame(self)
-        self.FRAME_A.setStyleSheet(
-            "QWidget { background-color: %s }" % QtGui.QColor(210, 210, 235, 255).name())
-        self.LAYOUT_A = QtWidgets.QGridLayout()
-        self.FRAME_A.setLayout(self.LAYOUT_A)
-        self.setCentralWidget(self.FRAME_A)
-
-        # Place the zoom button
-        self.zoomBtn = QtWidgets.QPushButton(text='zoom')
-        setCustomSize(self.zoomBtn, 100, 50)
-        self.zoomBtn.clicked.connect(self.zoomBtnAction)
-        self.LAYOUT_A.addWidget(self.zoomBtn, *(0, 0))
-
-        # Place the matplotlib figure
-        self.myFig = CustomFigCanvas()
-        self.LAYOUT_A.addWidget(self.myFig, *(0, 1))
-
-        # Add the callbackfunc to ..
-        myDataLoop = threading.Thread(
-            name='myDataLoop', target=dataSendLoop, daemon=True, args=(self.addData_callbackFunc,))
-        myDataLoop.start()
-
-        self.show()
-
-    def zoomBtnAction(self):
-        print("zoom in")
-        self.myFig.zoomIn(5)
-
-    def addData_callbackFunc(self, value):
-        # print("Add data: " + str(value))
-        self.myFig.addData(value)
-
-
 class CustomFigCanvas(FigureCanvas, TimedAnimation):
-    def __init__(self):
-        self.addedData = []
-        print('Matplotlib Version:', matplotlib.__version__)
+    def __init__(self,
+                 label="falling",
+                 color=None):
+
+        self.addedData = {}
+        self.label = label
+        self.color = color
 
         # The data
         self.xlim = 100
         self.n = np.linspace(0, self.xlim - 1, self.xlim)
-        self.y = (self.n * 0.0)
+        self.y = {label: (self.n * 0.0)}
+
+        # total data of graph
+        graph_data = pd.DataFrame(self.y).reset_index()
 
         # The window
-        self.fig = Figure(figsize=(5, 5), facecolor="#303030", dpi=100)
+        self.fig = Figure(figsize=(10, 7), facecolor="#323232", dpi=100)
+        self.fig.subplots_adjust(left=0, bottom=0, right=1,
+                                 top=1, wspace=0, hspace=0)
         self.ax1 = self.fig.add_subplot(111)
+        # self.ax1 = plt.axes([0.0, 0.0, 1.0, 1.0])
+
+        # plot multiple lines
+        axes = graph_data.plot(x="index", y=[label],
+                               ax=self.ax1, lw=3, c=color)
+
+        # remove legend
+        axes.get_legend().remove()
+        # self.ax1.legend(loc="upper left", facecolor="#323232",
+        #                 labelcolor='linecolor', frameon=False)
+
+        self.lines = axes.lines
 
         # self.ax1 settings
-        self.ax1.set_xlabel('time')
-        self.ax1.set_ylabel('risk of falls')
-        self.ax1.set_facecolor("#303030")
+        self.ax1.grid(True)
         self.ax1.xaxis.label.set_color('white')
         self.ax1.yaxis.label.set_color('white')
+        self.ax1.set_xticklabels([])
+        # self.ax1.set_yticklabels([])
+        # self.ax1.set_yticks([])
+
         self.ax1.tick_params(axis='x', colors='white')
-        self.ax1.tick_params(axis='y', colors='white')
-        self.ax1.grid(True)
         self.ax1.set(frame_on=False)
 
-        # TODO. multiple line graphs
-        self.line1 = Line2D([], [], color='cyan')
-        self.line1_tail = Line2D([], [], color='red', linewidth=2)
-        self.line1_head = Line2D(
-            [], [], color='red', marker='o', markeredgecolor='r')
-        self.ax1.add_line(self.line1)
-        self.ax1.add_line(self.line1_tail)
-        self.ax1.add_line(self.line1_head)
         self.ax1.set_xlim(0, self.xlim - 1)
-        self.ax1.set_ylim(0, 1)
+        self.ax1.set_ylim(0, 1.0)
 
         FigureCanvas.__init__(self, self.fig)
         TimedAnimation.__init__(self, self.fig, interval=50, blit=True)
@@ -116,20 +82,12 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
         return iter(range(self.n.size))
 
     def _init_draw(self):
-        lines = [self.line1, self.line1_tail, self.line1_head]
-        for l in lines:
+        for l in self.lines:
             l.set_data([], [])
 
-    def addData(self, value):
-        self.addedData.append(value)
-
-    def zoomIn(self, value):
-        bottom = self.ax1.get_ylim()[0]
-        top = self.ax1.get_ylim()[1]
-        bottom += value
-        top -= value
-        self.ax1.set_ylim(bottom, top)
-        self.draw()
+    def addData(self, res):
+        # TODO. multiple values not scalar
+        self.addedData.update(res)
 
     def _step(self, *args):
         # Extends the _step() method for the TimedAnimation class.
@@ -142,19 +100,31 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
             pass
 
     def _draw_frame(self, framedata):
-        margin = 2
-        while(len(self.addedData) > 0):
-            self.y = np.roll(self.y, -1)
-            self.y[-1] = self.addedData[0]
-            del(self.addedData[0])
 
-        # TODO. draw frame on multiple lines
-        self.line1.set_data(
-            self.n[0:self.n.size - margin], self.y[0:self.n.size - margin])
-        self.line1_tail.set_data(np.append(
-            self.n[-10:-1 - margin], self.n[-1 - margin]), np.append(self.y[-10:-1 - margin], self.y[-1 - margin]))
-        self.line1_head.set_data(self.n[-1 - margin], self.y[-1 - margin])
-        self._drawn_artists = [self.line1, self.line1_tail, self.line1_head]
+        anim_artists = []
+        is_new = len(self.addedData.keys()) > 0
+
+        yvals = self.y[self.label]
+        if is_new:
+            yvals = np.roll(yvals, -1)
+            yvals[-1] = self.addedData[self.label]
+            # update self.y[self.label]
+            self.y[self.label] = yvals
+
+        # if valid new data is given
+        graph_data = pd.DataFrame(self.y).values
+        margin = 2
+        for ix, line in enumerate(self.lines):
+            yvals = graph_data[:, ix]
+            # print(yvals)
+            line.set_data(
+                self.n[0:self.n.size - margin], yvals[0:self.n.size - margin])
+            anim_artists.append(line)
+
+        self._drawn_artists = anim_artists
+
+        # re-initialize data
+        self.addedData = {}
 
 
 # You need to setup a signal slot mechanism, to
@@ -162,7 +132,7 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
 # Believe me, if you don't do this right, things
 # go very very wrong..
 class Communicate(QtCore.QObject):
-    data_signal = QtCore.pyqtSignal(float)
+    data_signal = QtCore.pyqtSignal(object)
 
 
 def dataSendLoop(addData_callbackFunc):
@@ -184,10 +154,10 @@ def dataSendLoop(addData_callbackFunc):
         i += 1
 
 
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    QtWidgets.QApplication.setStyle(
-        QtWidgets.QStyleFactory.create('Plastique'))
-    myGUI = CustomMainWindow()
+def start_graph_worker(target, callbacks):
+    # Add the callbackfunc to ..
+    graph_worker = threading.Thread(
+        name='graph_worker', target=target, daemon=True, args=callbacks)
+    graph_worker.start()
 
-    sys.exit(app.exec_())
+    return graph_worker
