@@ -1,4 +1,22 @@
+# vscode config files
 .vscode
+
+# archives
+*.zip
+*.tar
+*.tar.gz
+
+# ignore files in folder model_ckpt
+backend/model_ckpt/*
+# but keep the folder by keeping .gitkeep file
+!backend/model_ckpt/.gitkeep
+
+# ignore model archives for torch serving (.mar)
+backend/model_store/*
+# but keep the folder by keeping .gitkeep file
+!backend/model_store/.gitkeep
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
