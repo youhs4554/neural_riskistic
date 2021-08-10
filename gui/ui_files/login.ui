@@ -35,7 +35,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size:24pt; color:rgb(243, 243, 243)</string>
+       <string notr="true">font-size:15pt; color:rgb(243, 243, 243)</string>
       </property>
      </widget>
     </item>
@@ -48,7 +48,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size:20pt; color:rgb(243, 243, 243)</string>
+       <string notr="true">font-size:15pt; color:rgb(243, 243, 243)</string>
       </property>
      </widget>
     </item>
@@ -61,7 +61,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size: 25pt; color: rgb(255, 0, 127)</string>
+       <string notr="true">font-size: 15pt; color: rgb(255, 0, 127)</string>
       </property>
       <property name="text">
        <string>Password</string>
@@ -77,7 +77,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size: 25pt; color: rgb(255, 0, 127)</string>
+       <string notr="true">font-size: 15pt; color: rgb(255, 0, 127)</string>
       </property>
       <property name="text">
        <string>Email</string>
@@ -99,7 +99,7 @@
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">color: rgb(225, 225, 225); font-size: 35pt; text-align:center</string>
+    <string notr="true">color: rgb(225, 225, 225); font-size: 25pt; text-align:center</string>
    </property>
    <property name="text">
     <string>Login</string>
@@ -141,7 +141,7 @@
     <item row="1" column="1">
      <widget class="QPushButton" name="loginbutton">
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(167, 168, 167); font-size:24pt; color: rgb(255,255,255)</string>
+       <string notr="true">background-color: rgb(167, 168, 167); font-size:15pt; color: rgb(255,255,255)</string>
       </property>
       <property name="text">
        <string>Login</string>
@@ -160,7 +160,7 @@
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">color: rgb(255,0,0); font-size: 18pt</string>
+    <string notr="true">color: rgb(255,0,0); font-size: 12pt</string>
    </property>
    <property name="text">
     <string>invalid email or password</string>

@@ -1,6 +1,3 @@
-# 출처 - https://github.com/ddd4117/GUI/blob/master/src/camera_test.py
-# 수정 - webnautes
-
 from functools import partial
 import threading
 from graph_widget import Communicate, CustomFigCanvas, start_graph_worker
@@ -66,7 +63,7 @@ class UpdatableLabelWidget(QtWidgets.QLabel):
             color = "red"
         else:
             color = "white"
-        self.setStyleSheet(f"color: {color}; font-size: 25pt")
+        self.setStyleSheet(f"color: {color}; font-size: 15pt")
 
 
 class ShowVideo(QtCore.QObject):
@@ -196,6 +193,9 @@ class VideoWidget(QtWidgets.QWidget):
 
         self.start_btn = QtWidgets.QPushButton("Start", self)
         self.stop_btn = QtWidgets.QPushButton("Stop", self)
+        
+        self.start_btn.setStyleSheet("background-color: lightgray")
+        self.stop_btn.setStyleSheet("background-color: lightgray")
 
         self.setLayout(QtWidgets.QHBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)

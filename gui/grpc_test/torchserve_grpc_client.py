@@ -1,8 +1,8 @@
 import grpc
-import inference_pb2
-import inference_pb2_grpc
-import management_pb2
-import management_pb2_grpc
+from . import inference_pb2
+from . import inference_pb2_grpc
+from . import management_pb2
+from . import management_pb2_grpc
 import sys
 import cv2
 from PIL import Image

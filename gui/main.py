@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
 from video_widget import VideoWidget
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QAction, QDialog, QApplication, QLabel, QLineEdit, QMainWindow, QStackedWidget
@@ -7,7 +7,12 @@ from PyQt5.uic import loadUi
 import pyrebase
 from dotenv import dotenv_values
 import time
+import platform
 
+import os, sys
+extDataDir = os.getcwd()
+if getattr(sys, 'frozen', False):
+    extDataDir = sys._MEIPASS
 
 def releaseCameraResource(func):
     def wrapper_fn(self):
@@ -26,6 +31,8 @@ class MainWidget(QtWidgets.QStackedWidget):
         self.init_ui(dialog, size, enabled)
 
     def init_ui(self, dialog, size, enabled):
+        self.setWindowTitle('Neural Riskistic App')
+        self.setWindowIcon(QIcon(os.path.join(extDataDir, "images/app_logo.png")))
         dialog_instance = dialog()
         self.setFixedSize(*size)
         self.addWidget(dialog_instance)
@@ -50,7 +57,7 @@ class MainWidget(QtWidgets.QStackedWidget):
 class Login(QDialog):
     def __init__(self):
         super(Login, self).__init__()
-        loadUi("ui_files/login.ui", self)
+        loadUi(os.path.join(extDataDir, "ui_files/login.ui"), self)
         self.loginbutton.clicked.connect(self.loginfunction)
         self.password.setEchoMode(QtWidgets.QLineEdit.Password)
         self.createaccbutton.clicked.connect(self.gotocreate)
@@ -93,7 +100,7 @@ class Login(QDialog):
 class CreateAcc(QDialog):
     def __init__(self):
         super(CreateAcc, self).__init__()
-        loadUi("ui_files/createacc.ui", self)
+        loadUi(os.path.join(extDataDir, "ui_files/createacc.ui"), self)
         self.signupbutton.clicked.connect(self.createaccfunction)
         self.canclebutton.clicked.connect(self.gotologin)
         self.password.setEchoMode(QLineEdit.Password)
@@ -139,22 +146,22 @@ class MainApp(QMainWindow):
         self.initUI(enabled)
 
     def initUI(self, enabled):
-        self.homeAction = QAction(QIcon('./images/home_icon.png'),
+        self.homeAction = QAction(QIcon(os.path.join(extDataDir, 'images/home_icon.png')),
                                   'Go to dashboard home', self)
         self.homeAction.triggered.connect(self.show_Home)
         self.homeAction.setCheckable(True)
 
         self.startAction = QAction(
-            QIcon('./images/activity_icon.png'), 'Run Activity Test', self)
+            QIcon(os.path.join(extDataDir, 'images/activity_icon.png')), 'Run Activity Test', self)
         self.startAction.triggered.connect(self.start_ActivityTest)
         self.startAction.setCheckable(True)
 
-        self.gaitAction = QAction(QIcon('./images/gait_icon.png'),
+        self.gaitAction = QAction(QIcon(os.path.join(extDataDir, 'images/gait_icon.png')),
                                   'Run Gait Test', self)
         self.gaitAction.triggered.connect(self.start_GaitTest)
         self.gaitAction.setCheckable(True)
 
-        self.exitAction = QAction(QIcon("./images/exit_icon.png"),
+        self.exitAction = QAction(QIcon(os.path.join(extDataDir, "images/exit_icon.png")),
                                   'Exit client and return to login window!', self)
         self.exitAction.triggered.connect(self.exit_App)
         self.statusBar().showMessage(self.date.toString(QtCore.Qt.DefaultLocaleLongDate))
@@ -171,15 +178,20 @@ class MainApp(QMainWindow):
             "QToolButton:hover {background-color:lightgray} QToolButton:checked { border : 10px solid yellow }")
 
         self.setWindowTitle('Neural Riskistic App')
+        self.setWindowIcon(QIcon(os.path.join(extDataDir, "images/app_logo.png")))
 
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
         self.dashExample = QLabel(self)
         self.dashExample.resize(640 + 250, 480 + 250)
 
+        sample_path = os.path.join(extDataDir, 'images/dashboard_example.png')
+        if platform.system() == "Windows":
+            sample_path = sample_path.replace("\\", "/")
+        
         # dummy dashboard example image
         self.dashExample.setStyleSheet(
-            "image:url(./images/dashboard_example.png)")
+            f"image:url({sample_path})")
 
         screen = QtWidgets.QDesktopWidget().screenGeometry()
         size = self.geometry()
@@ -209,6 +221,8 @@ class MainApp(QMainWindow):
 
         self.central_widget.addWidget(self.dashExample)
         self.central_widget.setCurrentWidget(self.dashExample)
+        self.setWindowState(QtCore.Qt.WindowMaximized)
+        self.setStyleSheet("background-color: #323232")
 
     def start_ActivityTest(self):
         print("start_ActivityTest!!!")
@@ -257,11 +271,28 @@ class MainApp(QMainWindow):
 
 if __name__ == "__main__":
     # firebase setup
-    firebaseConfig = dotenv_values(".env")
+    firebaseConfig = dotenv_values(os.path.join(extDataDir, '.env'))
     firebase = pyrebase.initialize_app(firebaseConfig)
     auth = firebase.auth()
 
     app = QApplication(sys.argv)
+
+    # Create splashscreen
+    splash_pix = QPixmap(os.path.join(extDataDir, "images/app_logo.png"))
+    splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+
+    # add fade to splashscreen 
+    opaqueness = 0.0
+    step = 0.06
+    splash.setWindowOpacity(opaqueness)
+    splash.show()
+    while opaqueness < 1:
+        splash.setWindowOpacity(opaqueness)
+        time.sleep(step) # Gradually appears
+        opaqueness+=step
+    time.sleep(0.5)
+    splash.close()
+
     widget = MainWidget(Login, size=(480, 640))
     win = MainApp(enabled=False)
     sys.exit(app.exec_())

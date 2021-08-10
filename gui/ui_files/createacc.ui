@@ -26,7 +26,7 @@
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">color: rgb(255,0,0); font-size: 18pt</string>
+    <string notr="true">color: rgb(255,0,0); font-size: 12pt</string>
    </property>
    <property name="text">
     <string>password is not matched!</string>
@@ -54,7 +54,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size:24pt; color:rgb(243, 243, 243)</string>
+       <string notr="true">font-size:15pt; color:rgb(243, 243, 243)</string>
       </property>
      </widget>
     </item>
@@ -67,7 +67,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size:20pt; color:rgb(243, 243, 243)</string>
+       <string notr="true">font-size:15pt; color:rgb(243, 243, 243)</string>
       </property>
      </widget>
     </item>
@@ -80,7 +80,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size: 25pt; color: rgb(255, 0, 127)</string>
+       <string notr="true">font-size: 15pt; color: rgb(255, 0, 127)</string>
       </property>
       <property name="text">
        <string>Password</string>
@@ -96,7 +96,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size: 25pt; color: rgb(255, 0, 127)</string>
+       <string notr="true">font-size: 15pt; color: rgb(255, 0, 127)</string>
       </property>
       <property name="text">
        <string>Email</string>
@@ -112,7 +112,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size: 25pt; color: rgb(255, 0, 127)</string>
+       <string notr="true">font-size: 15pt; color: rgb(255, 0, 127)</string>
       </property>
       <property name="text">
        <string>Confirm Pass</string>
@@ -128,7 +128,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font-size:20pt; color:rgb(243, 243, 243)</string>
+       <string notr="true">font-size:15pt; color:rgb(243, 243, 243)</string>
       </property>
      </widget>
     </item>
@@ -147,7 +147,7 @@
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">color: rgb(225, 225, 225); font-size: 35pt; text-align:center</string>
+    <string notr="true">color: rgb(225, 225, 225); font-size: 25pt; text-align:center</string>
    </property>
    <property name="text">
     <string>Sign Up</string>
@@ -169,7 +169,7 @@
     <item row="0" column="0">
      <widget class="QPushButton" name="signupbutton">
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(167, 168, 167); font-size:20pt; color: rgb(255,255,255)</string>
+       <string notr="true">background-color: rgb(167, 168, 167); font-size:15pt; color: rgb(255,255,255)</string>
       </property>
       <property name="text">
        <string>Sign up</string>
@@ -179,7 +179,7 @@
     <item row="1" column="0">
      <widget class="QPushButton" name="canclebutton">
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(167, 168, 167); font-size:20pt; color: rgb(255,255,255)</string>
+       <string notr="true">background-color: rgb(167, 168, 167); font-size:15pt; color: rgb(255,255,255)</string>
       </property>
       <property name="text">
        <string>Cancle</string>
