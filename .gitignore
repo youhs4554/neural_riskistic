@@ -15,7 +15,8 @@ backend/model_ckpt/*
 backend/model_store/*
 # but keep the folder by keeping .gitkeep file
 !backend/model_store/.gitkeep
-
+# torch serve logfile
+backend/logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

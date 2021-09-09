@@ -9,6 +9,7 @@ import os
 from ts.torch_handler.base_handler import BaseHandler
 import zipfile
 
+
 class ActivityClassifier(BaseHandler):
     """
     A custom model handler implementation.
@@ -41,7 +42,8 @@ class ActivityClassifier(BaseHandler):
         if "serializedFile" in self.manifest["model"]:
             serialized_file = self.manifest["model"]["serializedFile"]
             model_pt_path = os.path.join(model_dir, serialized_file)
-            hparams_file = os.path.join(model_dir, "hparams.yaml")  # this file shoud be given at --extra-files option
+            # this file shoud be given at --extra-files option
+            hparams_file = os.path.join(model_dir, "hparams.yaml")
 
         # # model def file
         # model_file = self.manifest["model"].get("modelFile", "")
@@ -66,35 +68,36 @@ class ActivityClassifier(BaseHandler):
 
         # load ckpt through pytorch_lightning
         pl_model = LightningVideoClassifier.load_from_checkpoint(model_pt_path,
-                                                                   hparams_file=hparams_file,
-                                                                   hparam_overrides={"batch_per_gpu": 1})
+                                                                 hparams_file=hparams_file,
+                                                                 hparam_overrides={"batch_per_gpu": 1})
 
         pl_model.to(self.device)
         pl_model.eval()
 
         # detach model instanche for evaluation
         self.model = pl_model.model
-        
+
     def preprocess(self, data):
         """
         Transform raw input into model input data.
         :param batch: list of raw requests, should match batch size
         :return: list of preprocessed model input data
         """
+        # TODO. identify each camera by kafka topic name
         # data : list of requests
         image = data[0].get("data")
         frame_count = int_from_bytes(data[0].get("frame_count"))
-        L = self.L # input clip legnth
+        L = self.L  # input clip legnth
 
         # Take the input data and make it inference ready
         image_processing = transforms.Compose([
-            transforms.Resize((128,171)),
+            transforms.Resize((128, 171)),
             transforms.CenterCrop(112),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                std=[0.229, 0.224, 0.225])
+                                 std=[0.229, 0.224, 0.225])
         ])
-        
+
         if isinstance(image, str):
             # if the image is a string of bytesarray.
             image = base64.b64decode(image)
@@ -105,12 +108,12 @@ class ActivityClassifier(BaseHandler):
             image = image_processing(image)
         else:
             # if the image is a list
-            image = torch.FloatTensor(image)    
+            image = torch.FloatTensor(image)
 
         data_preprocess = None
-        
+
         # invoke flag. It is true when the minimum input length condition is satisfied
-        invoke_flag = frame_count >= L 
+        invoke_flag = frame_count >= L
         self.invoke_flag = invoke_flag
 
         if not invoke_flag:
@@ -119,16 +122,18 @@ class ActivityClassifier(BaseHandler):
             self.cache[key] = image
         else:
             # if cache is full -> rotate and replace old frame with latest image
-            self.cache = rotate(self.cache, n=-1) # rote dict first
-            self.cache[L-1] = image # replace oldest image with latest image
-            data_preprocess = torch.stack(list(self.cache.values())).transpose(0,1)
+            self.cache = rotate(self.cache, n=-1)  # rote dict first
+            self.cache[L-1] = image  # replace oldest image with latest image
+            data_preprocess = torch.stack(
+                list(self.cache.values())).transpose(0, 1)
             data_preprocess = data_preprocess[None, ...]  # expand batch_dim
 
         print("####################### invoke_flag : ", self.invoke_flag)
         print("####################### length of cahed data : ", len(self.cache))
         if data_preprocess is not None:
-            print("####################### shape of processed data : ", data_preprocess.shape)
-        
+            print("####################### shape of processed data : ",
+                  data_preprocess.shape)
+
         return data_preprocess
 
     def inference(self, data):
@@ -142,14 +147,14 @@ class ActivityClassifier(BaseHandler):
             Torch Tensor : The Predicted Torch Tensor is returned in this function.
         """
         if not self.invoke_flag:
-            return 
+            return
 
         marshalled_data = data.to(self.device)
 
         n, _, d, h, w = marshalled_data.shape
 
         # dummy mask inputs since model code assume target masks coming with input but they are never used.
-        dummy_masks = torch.ones(n,1,d,h,w).to(self.device)
+        dummy_masks = torch.ones(n, 1, d, h, w).to(self.device)
 
         with torch.no_grad():
             clip_out, _ = self.model(marshalled_data, dummy_masks)
@@ -166,23 +171,24 @@ class ActivityClassifier(BaseHandler):
         if inference_output is None:
             return [0]
 
-        print("####################### shape of inference data : ", type(inference_output), inference_output.shape)
+        print("####################### shape of inference data : ",
+              type(inference_output), inference_output.shape)
 
         # Take output from network and post-process to desired format
-        __classes = dict(enumerate(['background', 
-                 'falling', 
-                 'sitting', 
-                 'sleeping', 
-                 'standing',
-                 'walking']))
+        __classes = dict(enumerate(['background',
+                                    'falling',
+                                    'sitting',
+                                    'sleeping',
+                                    'standing',
+                                    'walking']))
         probs, predictions = inference_output.sort(1, True)
         probs = probs.tolist()
         predictions = predictions.tolist()
 
         # resulting response
-        res = [ 
+        res = [
             {
-                __classes[pred]: prob for pred,prob in zip(pred_sample, prob_sample)
+                __classes[pred]: prob for pred, prob in zip(pred_sample, prob_sample)
             } for pred_sample, prob_sample in zip(predictions, probs)
         ]
         return res

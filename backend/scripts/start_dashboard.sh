@@ -1,0 +1,1 @@
+torchserve-dashboard -- --config_path ./config.properties
