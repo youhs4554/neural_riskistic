@@ -15,7 +15,7 @@ consumer1 = KafkaConsumer(bootstrap_servers=BROKER)
 consumer1.subscribe(pattern=f"room_{ROOM_NUMBER}.realsense_{CAMERA_NUMBER}.*.color$")
 
 consumer2 = KafkaConsumer(bootstrap_servers=BROKER)
-consumer2.subscribe(pattern=f"room_{ROOM_NUMBER}.realsense_{CAMERA_NUMBER}.*.prediction$")
+consumer2.subscribe(pattern=f"room_{ROOM_NUMBER}.realsense_{CAMERA_NUMBER}.*.prediction.test$")
 
 # Set the consumer in a Flask App
 app = Flask(__name__)
@@ -77,4 +77,4 @@ def get_video_stream():
             b'Content-Type: image/jpg\r\n\r\n' + img_byte_arr + b'\r\n\r\n')
                 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=True, port=9999)
