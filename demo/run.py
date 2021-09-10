@@ -160,7 +160,7 @@ def main():
 
             # update detection_topic
             producer.send(detection_topic, cv2.imencode(
-                ".jpg", detection_image)[1].tobytes())
+                ".jpg", cv2.cvtColor(detection_image, cv2.COLOR_BGR2RGB))[1].tobytes())
 
             # update action_topic
             producer.send(action_topic, bytes(
@@ -194,7 +194,7 @@ def main():
 
         # update detection_topic
         producer.send(detection_topic, cv2.imencode(
-            ".jpg", detection_image)[1].tobytes())
+            ".jpg", cv2.cvtColor(detection_image, cv2.COLOR_BGR2RGB))[1].tobytes())
 
         image = Image.open(io.BytesIO(msg.value))
         image = np.array(image)
@@ -235,7 +235,7 @@ def main():
 
         # update detection_topic
         producer.send(detection_topic, cv2.imencode(
-            ".jpg", detection_image)[1].tobytes())
+            ".jpg", cv2.cvtColor(detection_image, cv2.COLOR_BGR2RGB))[1].tobytes())
 
         ix += 1
 
